@@ -70,9 +70,6 @@ class SplineTween implements IFlxDestroyable {
 			}
 		}
 		generatedPoints[generatedPoints.length] = points[points.length - 1];
-		//trace('finished making stuff');
-		//trace(generatedPoints);
-		tweenLoop();
 	}
 	/**
 	 * Set to true when the tween starts
