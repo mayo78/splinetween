@@ -1,12 +1,13 @@
 package splinetween;
 
+import flixel.util.FlxDestroyUtil.IFlxDestroyable;
 import flixel.util.FlxStringUtil;
 import splinetween.SplineTween;
 import flixel.math.FlxPoint;
 
 
 @:allow(splinetween.SplineTween)
-class SplinePoint {
+class SplinePoint implements IFlxDestroyable {
 	var time:Int;
 	var position = FlxPoint.get();
 	var scale = FlxPoint.get();
@@ -79,5 +80,15 @@ class SplinePoint {
 			i++;
 		}
 		return new SplinePoint(Std.int(a[0]), a[1], a[2], a[3], a[4], a[5] #if flixel_addons , a[6], a[7] #end);
+	}
+
+	var destroyed = false;
+	public function destroy() {
+		destroyed = true;
+		position.put();
+		scale.put();
+		#if flixel_addons
+		skew.put();
+		#end
 	}
 }
