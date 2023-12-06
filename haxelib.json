@@ -1,0 +1,15 @@
+{
+	"name": "useless_lib",
+	"url" : "https://github.com/mayo78/splinetween/",
+	"license": "MIT",
+	"tags": ["game", "openfl", "flash", "neko", "cpp", "android", "ios", "cross", "vscode"],
+	"description": "This library perfectly replicates the spline tween as seen in BFB!",
+	"version": "1.0.0",
+	"classPath": "source/",
+	"releasenote": "Initial release, skew doesnt work",
+	"contributors": ["Mayo78"],
+	"dependencies": {
+	  "flixel": ""
+	},
+	"main": "tools.Main"
+  }
