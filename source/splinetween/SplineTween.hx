@@ -70,9 +70,6 @@ class SplineTween implements IFlxDestroyable {
 			}
 		}
 		generatedPoints[generatedPoints.length] = points[points.length - 1];
-		//trace('finished making stuff');
-		//trace(generatedPoints);
-		tweenLoop();
 	}
 	/**
 	 * Set to true when the tween starts
@@ -108,6 +105,19 @@ class SplineTween implements IFlxDestroyable {
 		tweenLoop();
 		started = true;
 		return this;
+	}
+	
+	/**
+	 * Whether the tween is paused or not
+	 */
+	public var paused(default, set):Bool;
+	function set_paused(v:Bool) {
+		if(tweened) {
+			currentTween.active = !v;
+		}else{
+			currentTimer.active = !v;
+		}
+		return paused = v;
 	}
 	var tweenIndex = 0;
 	var currentTween:FlxTween;
