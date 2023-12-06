@@ -35,7 +35,7 @@ class SplineTween implements IFlxDestroyable {
 	 * @param points An array of SplinePoints
 	 * @param options Optional options to option the option
 	 */
-	public function new(obj:FlxSprite, points:Array<SplinePoint>, ?options:SplineOptions) {
+	public function new(obj:FlxSprite, points:Array<OneOfTwo<SplinePoint, Array<Float>>>, ?options:SplineOptions) {
 		//super();
 		this.obj = obj;
 		#if flixel_addons
@@ -50,6 +50,10 @@ class SplineTween implements IFlxDestroyable {
 		}
 		var elapsed = .0;
 		//maxt = points[points.length-1].time;
+		var points:Array<SplinePoint> = [for(p in points) {
+			if(p is Array) SplinePoint.fromArray(cast p);
+			else cast p;
+		}];
 		if(points[0].time > 1) points.insert(0, points[0].copy(1));
 		for(i in 0...points.length) {
 			var fi0 = points[Std.int(Math.max(0, i - 1))];

@@ -72,4 +72,12 @@ class SplinePoint {
 			LabelValuePair.weak("t", time),
 		]);
 	}
+	public static function fromArray(a:Array<Float>) {
+		var i = a.length;
+		while(a.length < #if flixel_addons 7 #else 5 #end) {
+			a.push((3 <= i && i <= 4) ? 1 : 0);
+			i++;
+		}
+		return new SplinePoint(Std.int(a[0]), a[1], a[2], a[3], a[4], a[5] #if flixel_addons , a[6], a[7] #end);
+	}
 }
