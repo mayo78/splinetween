@@ -154,9 +154,11 @@ class SplineTween implements IFlxDestroyable {
 					'scale.y': p.scale.y,
 					angle: p.angle,
 				}, fps, {onComplete: tweenLoop});
+				if(tweenManager != null)
+					currentTween.manager = tweenManager;
 			} : {
 				applyPoint(p);
-				currentTimer = new FlxTimer().start(fps, tweenLoop);
+				currentTimer = new FlxTimer(timerManager).start(fps, tweenLoop);
 			}
 			tweenIndex++;
 		}else{
@@ -215,7 +217,6 @@ class SplineTween implements IFlxDestroyable {
 		for(p in generatedPoints) {
 			if(!p.destroyed) p.destroy();
 		}
-		generatedPoints = null;
 		obj = null;
 		#if flixel_addons
 		skewobj = null;
