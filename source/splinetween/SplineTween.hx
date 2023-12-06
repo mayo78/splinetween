@@ -109,6 +109,19 @@ class SplineTween implements IFlxDestroyable {
 		started = true;
 		return this;
 	}
+	
+	/**
+	 * Whether the tween is paused or not
+	 */
+	public var paused(default, set):Bool;
+	function set_paused(v:Bool) {
+		if(tweened) {
+			currentTween.active = v;
+		}else{
+			currentTween.active = v;
+		}
+		return paused = v;
+	}
 	var tweenIndex = 0;
 	var currentTween:FlxTween;
 	var currentTimer:FlxTimer;
