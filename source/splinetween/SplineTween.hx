@@ -133,11 +133,7 @@ class SplineTween implements IFlxDestroyable {
 		var p = generatedPoints[tweenIndex];
 		var prevp = generatedPoints[tweenIndex - 1];
 		if(prevp != null){
-			prevp.position.put();
-			prevp.scale.put();
-			#if flixel_addons
-			prevp.skew.put();
-			#end
+			prevp.destroy();
 		}
 		if(p != null) {
 			//trace('im gonna do this now');
@@ -216,6 +212,9 @@ class SplineTween implements IFlxDestroyable {
 		);
 	}
 	public function destroy() {
+		for(p in generatedPoints) {
+			if(!p.destroyed) p.destroy();
+		}
 		generatedPoints = null;
 		obj = null;
 		#if flixel_addons
