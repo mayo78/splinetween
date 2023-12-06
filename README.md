@@ -16,3 +16,19 @@ new SplineTween(test, [
 	new SplinePoint(144),
 ]).start();
 ```
+OR
+
+```haxe
+test = new FlxSkewedSprite();
+test.makeGraphic(100, 200, FlxColor.GRAY);
+add(test);
+new SplineTween(test, [
+	[1, 500, 200, 1.2, 1.4, 32, 1.2, 1.5],
+	[6, 200, 100, 0.4, 0.6, -15, 2.3],
+	[14, 600, 100, 1.4, 1.6, 60, 1.5, 2.3],
+	[26, 500, 200, 1.2, 1.4, 32],
+	[50, 200, 100, 0.4, 0.6, -15, 1.2],
+	[82, 600, 100, 1.4, 1.6, 60, 50, 50],
+	[144],
+]).start();
+```
