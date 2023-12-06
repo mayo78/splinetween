@@ -25,7 +25,7 @@ class SplinePoint {
 	 * @param skewx = 1. 
 	 * @param skewy = 1. 
 	 */
-	public function new(frame = -1, x = .0, y = .0, sx = 1., sy = 1., angle = .0 #if flixel_addons , ?skewx = 1., ?skewy = 1. #end) {
+	public function new(frame = -1, x = .0, y = .0, sx = 1., sy = 1., angle = .0 #if flixel_addons , ?skewx = .0, ?skewy = .0 #end) {
 		position.set(x, y);
 		scale.set(sx, sy);
 		#if flixel_addons

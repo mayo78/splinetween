@@ -69,7 +69,7 @@ class SplineTween implements IFlxDestroyable {
 				fi++;
 			}
 		}
-		generatedPoints[generatedPoints.length] = points[points.length - 1];
+		generatedPoints.push(points[points.length - 1]);
 	}
 	/**
 	 * Set to true when the tween starts
@@ -95,7 +95,9 @@ class SplineTween implements IFlxDestroyable {
 	 */
 	public function finish(?destroy = true) {
 		cancel(false);
-		applyPoint(generatedPoints[tweenIndex - 1]);
+		finished = true;
+		applyPoint(generatedPoints[generatedPoints.length - 1]);
+		//trace('the final one is ${generatedPoints[generatedPoints.length - 1]}');
 		if(destroy) this.destroy();
 	}
 	/**
@@ -158,6 +160,7 @@ class SplineTween implements IFlxDestroyable {
 			}
 			tweenIndex++;
 		}else{
+			finish();
 			if(onComplete != null) {
 				onComplete(this);
 			}
