@@ -8,8 +8,6 @@
 	"classPath": "source/",
 	"releasenote": "Initial release, skew doesnt work",
 	"contributors": ["Mayo78"],
-	"dependencies": {
-	  "flixel": ""
-	},
+	"dependencies": {},
 	"main": "tools.Main"
   }
