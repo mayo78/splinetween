@@ -5,7 +5,9 @@ import flixel.util.typeLimit.OneOfTwo;
 import flixel.util.FlxTimer;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxAxes;
+#if flixel_addons
 import flixel.addons.effects.FlxSkewedSprite;
+#end
 import flixel.FlxSprite;
 
 class SplineTween implements IFlxDestroyable {
