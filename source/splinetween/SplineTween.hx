@@ -97,7 +97,7 @@ class SplineTween implements IFlxDestroyable {
 		cancel(false);
 		finished = true;
 		applyPoint(generatedPoints[generatedPoints.length - 1]);
-		trace('the final one is ${generatedPoints[generatedPoints.length - 1]}');
+		//trace('the final one is ${generatedPoints[generatedPoints.length - 1]}');
 		if(destroy) this.destroy();
 	}
 	/**
