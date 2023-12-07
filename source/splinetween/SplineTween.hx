@@ -38,6 +38,13 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 	var _frameBuffer = 0;
 	var tweened = true;
 	var onComplete:SplineTween->Void;
+	/**
+	 * The amount of loops left, will be ignored of number of loops isnt set from tween function!
+	 */
+	public var loops = -1;
+	var _doLoop = false;
+	var _infiniteLoop = true;
+	var _loopPoint = 0;
 
 	/**
 	 * Whether to automatically desotroy the tween when finished
@@ -61,9 +68,14 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 			skewobj = cast obj;
 		}
 		#end
+		var loopLength = -1;
 		if(options != null) {
 			if(options.fps != null) fps = options.fps;
 			if(options.tweened != null) tweened = options.tweened;
+			if(options.loops != null) loops = options.loops;
+			if(options.loopLength != null) loopLength = options.loopLength;
+			_doLoop = loops >= 0;
+			_infiniteLoop = loops == 0;
 			onComplete = options.onComplete;
 		}
 		var elapsed = .0;
@@ -72,6 +84,12 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 			if(p is Array) SplinePoint.fromArray(cast p);
 			else cast p;
 		}];
+		if(_doLoop) {
+			for(i in 0...3) {
+				//trace('adding ${points[i]} to the end of my thing');
+				points.push(points[i].copy(points[points.length - 1].time + points[i].time + loopLength));
+			}
+		}
 		if(points[0].time > 1) points.insert(0, points[0].copy(1));
 		for(i in 0...points.length) {
 			var fi0 = points[Std.int(Math.max(0, i - 1))];
@@ -83,6 +101,9 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 			//trace('i am ${fi1.time} and i put myself $fi1 there');
 			if(generatedPoints[fi0.time] == null) generatedPoints[fi0.time] = fi0;
 			var fi = fi1.time;
+			if(i == points.length - 3) {
+				_loopPoint = generatedPoints.length - 1;
+			}
 			while(fi < fi2.time) { //looks stupid i was just trying to replicate the original jsfl whateverrrr
 				_frameBuffer = fi;
 				var t = (fi - fi1.time)/(fi2.time - fi1.time);
@@ -201,6 +222,14 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 		frame = Math.floor(frameTime);
 		var p0 = generatedPoints[frame];
 		var p1 = generatedPoints[frame + 1];
+		if((_doLoop && loops > 0 || _infiniteLoop) && frame == _loopPoint) {
+			frameTime = 0;
+			loops--;
+			if(!_infiniteLoop && loops <= 0) {
+				finish(autoDestroy);
+				return;
+			}
+		}
 		if(p1 == null) {
 			finish(autoDestroy);
 			return;
@@ -298,6 +327,8 @@ typedef SplineOptions = {
 	?fps:Null<Float>,
 	?tweened:Null<Bool>,
 	?onComplete:SplineTween->Void,
+	?loops:Null<Int>,
+	?loopLength:Null<Int>, //if the end point of the tween doesnt match the begining point, set this to something and frames from the end to start will be generated
 }
 typedef SplinePointList = Array<OneOfTwo<SplinePoint, Array<Float>>>;
 enum SplinePropType {
