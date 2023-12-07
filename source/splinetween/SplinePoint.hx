@@ -81,7 +81,9 @@ class SplinePoint implements IFlxDestroyable {
 		}
 		return new SplinePoint(Std.int(a[0]), a[1], a[2], a[3], a[4], a[5] #if flixel_addons , a[6], a[7] #end);
 	}
-
+	public function toArray():Array<Float> {
+		return [time, position.x, position.y, scale.x, scale.y, angle, #if flixel_addons skew.x, skew.y #end];
+	}
 	var destroyed = false;
 	public function destroy() {
 		destroyed = true;

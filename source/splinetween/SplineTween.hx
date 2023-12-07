@@ -1,5 +1,8 @@
 package splinetween;
 
+import flixel.FlxG;
+import flixel.math.FlxMath;
+import flixel.FlxBasic;
 import flixel.util.FlxDestroyUtil.IFlxDestroyable;
 import flixel.util.typeLimit.OneOfTwo;
 import flixel.util.FlxTimer;
@@ -10,33 +13,48 @@ import flixel.addons.effects.FlxSkewedSprite;
 #end
 import flixel.FlxSprite;
 
-class SplineTween implements IFlxDestroyable {
+class SplineTween extends FlxBasic implements IFlxDestroyable {
+	public static var globalManager:SplineTweenManager;
 	/**
-	 * The tween manager that the tweens use if tweens are enabled
+	 * The tweens local manager usually is global manager
 	 */
-	public static var tweenManager:FlxTweenManager = null;
-	/**
-	 * The timer manager that timers will use if tweens are disabled
-	 */
-	public static var timerManager:FlxTimerManager = null;
-
-	var fps = 1/24;
+	public var manager:SplineTweenManager;
+	var fps = 24.0;
 	var generatedPoints:Array<SplinePoint> = [];
 	var obj:FlxSprite;
 	#if flixel_addons
 	var skewobj:FlxSkewedSprite;
 	#end
-	var frame = 0;
+
+	/**
+	 * The current frame
+	 */
+	public var frame = 0;
+	/**
+	 * Unfloored frame
+	 */
+	public var frameTime = 0.0;
+
+	var _frameBuffer = 0;
 	var tweened = true;
 	var onComplete:SplineTween->Void;
+
+	/**
+	 * Whether to automatically desotroy the tween when finished
+	 */
+	public var autoDestroy = true;
 	/**
 	 * Create's a spline tween.
 	 * @param obj The sprite to tween
 	 * @param points An array of SplinePoints
 	 * @param options Optional options to option the option
 	 */
-	public function new(obj:FlxSprite, points:Array<OneOfTwo<SplinePoint, Array<Float>>>, ?options:SplineOptions) {
-		//super();
+	public static function tween(obj:FlxSprite, points:SplinePointList, ?options:SplineOptions):SplineTween {
+		if(!_inited) _init();
+		return globalManager.tween(obj, points, options);
+	}
+	public function new(obj:FlxSprite, points:SplinePointList, ?options:SplineOptions) {
+		super();
 		this.obj = obj;
 		#if flixel_addons
 		if(obj is FlxSkewedSprite) {
@@ -66,7 +84,7 @@ class SplineTween implements IFlxDestroyable {
 			if(generatedPoints[fi0.time] == null) generatedPoints[fi0.time] = fi0;
 			var fi = fi1.time;
 			while(fi < fi2.time) { //looks stupid i was just trying to replicate the original jsfl whateverrrr
-				frame = fi;
+				_frameBuffer = fi;
 				var t = (fi - fi1.time)/(fi2.time - fi1.time);
 				//trace('i am $t');
 				interpolateElement(t, fi0, fi1, fi2, fi3);
@@ -89,8 +107,7 @@ class SplineTween implements IFlxDestroyable {
 	 */
 	public function cancel(?destroy = true) {
 		if(!started || finished) return;
-		if(tweened) currentTween.cancel();
-		else currentTimer.cancel();
+		active = false;
 		if(destroy) this.destroy();
 	}
 	/**
@@ -108,69 +125,13 @@ class SplineTween implements IFlxDestroyable {
 	 * Begins the spline tween
 	 */
 	public function start() {
-		tweenLoop();
 		started = true;
 		return this;
 	}
 	
-	/**
-	 * Whether the tween is paused or not
-	 */
-	public var paused(default, set):Bool;
-	function set_paused(v:Bool) {
-		if(tweened) {
-			currentTween.active = !v;
-		}else{
-			currentTimer.active = !v;
-		}
-		return paused = v;
-	}
-	var tweenIndex = 0;
-	var currentTween:FlxTween;
-	var currentTimer:FlxTimer;
-	function tweenLoop(?_:OneOfTwo<FlxTween, FlxTimer>) {
-		//trace('hi');
-		var p = generatedPoints[tweenIndex];
-		var prevp = generatedPoints[tweenIndex - 1];
-		if(prevp != null){
-			prevp.destroy();
-		}
-		if(p != null) {
-			//trace('im gonna do this now');
-			tweened ? {
-				if(currentTween != null) currentTween.destroy();
-				currentTween = FlxTween.tween(obj, #if flixel_addons (skewobj != null) ? {
-					x: p.position.x,
-					y: p.position.y,
-					'scale.x': p.scale.x,
-					'scale.y': p.scale.y,
-					'skew.x': p.skew.x,
-					'skew.y': p.skew.y,
-					angle: p.angle,
-				} : #end {
-					x: p.position.x,
-					y: p.position.y,
-					'scale.x': p.scale.x,
-					'scale.y': p.scale.y,
-					angle: p.angle,
-				}, fps, {onComplete: tweenLoop});
-				if(tweenManager != null)
-					currentTween.manager = tweenManager;
-			} : {
-				applyPoint(p);
-				currentTimer = new FlxTimer(timerManager).start(fps, tweenLoop);
-			}
-			tweenIndex++;
-		}else{
-			finish();
-			if(onComplete != null) {
-				onComplete(this);
-			}
-		}
-	}
 	var pointBuffer:SplinePoint;
 	function interpolateElement(t:Float, el0:SplinePoint, el1:SplinePoint, el2:SplinePoint, el3:SplinePoint) {
-		pointBuffer = new SplinePoint(frame);
+		pointBuffer = new SplinePoint(_frameBuffer);
 		interpolateProperty(t, el0, el1, el2, el3, SCALE(X));
 		interpolateProperty(t, el0, el1, el2, el3, SCALE(Y));
 		interpolateProperty(t, el0, el1, el2, el3, POS(X));
@@ -182,7 +143,7 @@ class SplineTween implements IFlxDestroyable {
 		}
 		#end
 		interpolateProperty(t, el0, el1, el2, el3, ANGLE);
-		generatedPoints[frame - 1] = pointBuffer;
+		generatedPoints[_frameBuffer - 1] = pointBuffer;
 	}
 	function interpolateProperty(t:Float, el0:SplinePoint, el1:SplinePoint, el2:SplinePoint, el3:SplinePoint, type:SplinePropType) {
 		pointBuffer.setProperty(spline(t,
@@ -213,7 +174,8 @@ class SplineTween implements IFlxDestroyable {
 			(3*p1 - p0 - 3*p2 + p3) * t * t * t
 		);
 	}
-	public function destroy() {
+	override function destroy() {
+		super.destroy();
 		for(p in generatedPoints) {
 			if(!p.destroyed) p.destroy();
 		}
@@ -222,6 +184,7 @@ class SplineTween implements IFlxDestroyable {
 		skewobj = null;
 		#end
 		onComplete = null;
+		manager.tweens.remove(this);
 	}
 	function applyPoint(p:SplinePoint) {
 		obj.setPosition(p.position.x, p.position.y);
@@ -231,7 +194,104 @@ class SplineTween implements IFlxDestroyable {
 		#if flixel_addons
 		if(skewobj != null) skewobj.skew.copyFrom(p.skew);
 		#end
-		if(currentTimer != null) currentTimer.destroy();
+	}
+	override function update(e:Float) {
+		super.update(e);
+		frameTime += e * fps;
+		frame = Math.floor(frameTime);
+		var p0 = generatedPoints[frame];
+		var p1 = generatedPoints[frame + 1];
+		if(p1 == null) {
+			finish(autoDestroy);
+			return;
+		}
+		if(tweened) {
+			var lerp = frameTime % 1;
+			lerpProp(lerp, p0, p1, SCALE(X));
+			lerpProp(lerp, p0, p1, SCALE(Y));
+			lerpProp(lerp, p0, p1, POS(X));
+			lerpProp(lerp, p0, p1, POS(Y));
+			lerpProp(lerp, p0, p1, ANGLE);
+			#if flixel_addons
+			if(skewobj != null){
+				lerpProp(lerp, p0, p1, SKEW(X));
+				lerpProp(lerp, p0, p1, SKEW(Y));
+			}
+			#end
+		}else{
+			applyPoint(p0);
+		}
+	}
+	function lerpProp(lerp:Float, p0:SplinePoint, p1:SplinePoint, type:SplinePropType) {
+		setProperty(FlxMath.lerp(p0.getProperty(type), p1.getProperty(type), lerp), type);
+	}
+	function getProperty(type:SplinePropType):Float {
+		return switch type {
+			case POS(axes): axes == X ? obj.x : obj.y;
+			case SCALE(axes): axes == X ? obj.scale.x : obj.scale.y;
+			#if flixel_addons
+			case SKEW(axes): axes == X ? skewobj.skew.x : skewobj.skew.y;
+			#end
+			case ANGLE: obj.angle;
+		}
+	}
+	function setProperty(v:Float, type:SplinePropType):Float {
+		return switch type {
+			case POS(axes): axes == X ? obj.x = v : obj.y = v;
+			case SCALE(axes): axes == X ? obj.scale.x = v : obj.scale.y = v;
+			#if flixel_addons
+			case SKEW(axes): axes == X ? skewobj.skew.x = v : skewobj.skew.y = v;
+			#end
+			case ANGLE: obj.angle = v;
+		}
+	}
+
+	static var _inited = false;
+	static function _init() {
+		_inited = true;
+		globalManager = new SplineTweenManager();
+		FlxG.plugins.add(globalManager);
+	}
+}
+//semi based on FlxTweenManager
+class SplineTweenManager extends FlxBasic {
+	@:allow(splinetween.SplineTween) var tweens:Array<SplineTween> = [];
+	public function new() {
+		super();
+		visible = false; //ok lol
+		FlxG.signals.preStateSwitch.add(clear);
+	}
+	override function destroy() {
+		super.destroy();
+		FlxG.signals.preStateSwitch.remove(clear);
+	}
+	/**
+	 * Clears it ALL IT  ALL GONE!!!!! AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH stolen lol
+	 */
+	public function clear() {
+		for (tween in tweens)
+		{
+			if (tween != null)
+			{
+				tween.active = false;
+				tween.destroy();
+			}
+		}
+		tweens.splice(0, tweens.length);
+	}
+	public function tween(obj:FlxSprite, points:SplinePointList, ?options:SplineOptions):SplineTween {
+		var twn = new SplineTween(obj, points, options);
+		twn.manager = this;
+		tweens.push(twn);
+		return twn;
+	}
+	override function update(e:Float) {
+		super.update(e);
+		for(tween in tweens) {
+			if(tween.active && !tween.finished && tween.started) {
+				tween.update(e);
+			}
+		}
 	}
 }
 typedef SplineOptions = {
@@ -239,6 +299,7 @@ typedef SplineOptions = {
 	?tweened:Null<Bool>,
 	?onComplete:SplineTween->Void,
 }
+typedef SplinePointList = Array<OneOfTwo<SplinePoint, Array<Float>>>;
 enum SplinePropType {
 	POS(axes:FlxAxes);
 	SCALE(axes:FlxAxes);
