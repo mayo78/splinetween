@@ -153,17 +153,7 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 	var pointBuffer:SplinePoint;
 	function interpolateElement(t:Float, el0:SplinePoint, el1:SplinePoint, el2:SplinePoint, el3:SplinePoint) {
 		pointBuffer = new SplinePoint(_frameBuffer);
-		interpolateProperty(t, el0, el1, el2, el3, SCALE(X));
-		interpolateProperty(t, el0, el1, el2, el3, SCALE(Y));
-		interpolateProperty(t, el0, el1, el2, el3, POS(X));
-		interpolateProperty(t, el0, el1, el2, el3, POS(Y));
-		#if flixel_addons
-		if(skewobj != null){
-			interpolateProperty(t, el0, el1, el2, el3, SKEW(X));
-			interpolateProperty(t, el0, el1, el2, el3, SKEW(Y));
-		}
-		#end
-		interpolateProperty(t, el0, el1, el2, el3, ANGLE);
+		forEachProp(prop -> interpolateProperty(t, el0, el1, el2, el3, prop));
 		generatedPoints[_frameBuffer - 1] = pointBuffer;
 	}
 	function interpolateProperty(t:Float, el0:SplinePoint, el1:SplinePoint, el2:SplinePoint, el3:SplinePoint, type:SplinePropType) {
@@ -235,18 +225,7 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 			return;
 		}
 		if(tweened) {
-			var lerp = frameTime % 1;
-			lerpProp(lerp, p0, p1, SCALE(X));
-			lerpProp(lerp, p0, p1, SCALE(Y));
-			lerpProp(lerp, p0, p1, POS(X));
-			lerpProp(lerp, p0, p1, POS(Y));
-			lerpProp(lerp, p0, p1, ANGLE);
-			#if flixel_addons
-			if(skewobj != null){
-				lerpProp(lerp, p0, p1, SKEW(X));
-				lerpProp(lerp, p0, p1, SKEW(Y));
-			}
-			#end
+			forEachProp(prop -> lerpProp(frameTime % 1, p0, p1, prop));
 		}else{
 			applyPoint(p0);
 		}
@@ -273,6 +252,19 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 			#end
 			case ANGLE: obj.angle = v;
 		}
+	}
+	function forEachProp(func:SplinePropType->Void) {
+		func(SCALE(X));
+		func(SCALE(Y));
+		func(POS(X));
+		func(POS(Y));
+		func(ANGLE);
+		#if flixel_addons
+		if(skewobj != null) {
+			func(SKEW(X));
+			func(SKEW(Y));
+		}
+		#end
 	}
 
 	static var _inited = false;
