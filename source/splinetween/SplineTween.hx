@@ -5,8 +5,6 @@ import flixel.math.FlxMath;
 import flixel.FlxBasic;
 import flixel.util.FlxDestroyUtil.IFlxDestroyable;
 import flixel.util.typeLimit.OneOfTwo;
-import flixel.util.FlxTimer;
-import flixel.tweens.FlxTween;
 import flixel.util.FlxAxes;
 #if flixel_addons
 import flixel.addons.effects.FlxSkewedSprite;
@@ -43,7 +41,7 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 	 */
 	public var loops = -1;
 	var _doLoop = false;
-	var _infiniteLoop = true;
+	var _infiniteLoop = false;
 	var _loopPoint = 0;
 
 	/**
@@ -78,7 +76,6 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 			_infiniteLoop = loops == 0;
 			onComplete = options.onComplete;
 		}
-		var elapsed = .0;
 		//maxt = points[points.length-1].time;
 		var points:Array<SplinePoint> = [for(p in points) {
 			if(p is Array) SplinePoint.fromArray(cast p);
@@ -130,6 +127,20 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 		if(!started || finished) return;
 		active = false;
 		if(destroy) this.destroy();
+		if(thenTween != null) thenTween.cancel(destroy); //will cancel all the tweens in the chain automatically so dont worrryryyyyyy
+	}
+	/**
+	 * Returns every "then" tween
+	 * @return Array<SplineTween>
+	 */
+	public function getThenChain():Array<SplineTween> { //not a var so people know that this is something you should save to somewhere!
+		var chain:Array<SplineTween> = [];
+		var twn:SplineTween = this;
+		while(twn.thenTween != null) {
+			chain.push(twn);
+			twn = twn.thenTween;
+		}
+		return chain;
 	}
 	/**
 	 * Finishes the spline tween by setting the object to the final point
@@ -140,6 +151,9 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 		finished = true;
 		applyPoint(generatedPoints[generatedPoints.length - 1]);
 		//trace('the final one is ${generatedPoints[generatedPoints.length - 1]}');
+		if(thenTween != null) {
+			thenTween.start();
+		}
 		if(destroy) this.destroy();
 	}
 	/**
@@ -272,6 +286,12 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 		_inited = true;
 		globalManager = new SplineTweenManager();
 		FlxG.plugins.add(globalManager);
+	}
+	var thenTween:SplineTween;
+	public function then(twn:SplineTween) {
+		twn.manager = manager;
+		thenTween = twn;
+		return twn;
 	}
 }
 //semi based on FlxTweenManager
