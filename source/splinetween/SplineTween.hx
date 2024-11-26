@@ -151,9 +151,10 @@ class SplineTween extends FlxBasic implements IFlxDestroyable {
 		finished = true;
 		applyPoint(generatedPoints[generatedPoints.length - 1]);
 		//trace('the final one is ${generatedPoints[generatedPoints.length - 1]}');
-		if(thenTween != null) {
+		if(thenTween != null)
 			thenTween.start();
-		}
+		if (onComplete != null)
+			onComplete(this);
 		if(destroy) this.destroy();
 	}
 	/**
